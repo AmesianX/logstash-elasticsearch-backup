@@ -46,13 +46,19 @@ EOF
 }
 
 if [ "$USER" != 'root' ] && [ "$LOGNAME" != 'root' ]; then
-  # I don't want to troubleshoot the permissions of others
   echo "This script must be run as root."
   exit 1
 fi
 
+if which boto-rsync >/dev/null; then
+  echo "Great, found boto-rsync"
+else
+  echo "This script requires boto-rsync to be installed and configured. Please install it with pip install boto_rsync"
+  exit 1
+fi
+
 # Defaults
-BOTOCMD="boto_rsync"
+BOTOCMD="boto-rsync"
 ELASTICSEARCH="http://localhost:9200"
 NICE=19
 TMP_DIR="/tmp"
