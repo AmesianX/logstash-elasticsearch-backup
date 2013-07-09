@@ -6,7 +6,7 @@
 # restore script.
 #   http://logstash.net
 #   http://www.elasticsearch.org
-#   https://github.com/s3tools/s3cmd | http://s3tools.org/s3cmd
+#   https://github.com/seedifferently/boto_rsync
 #
 #   Inspiration: 
 #     http://tech.superhappykittymeow.com/?p=296
@@ -29,16 +29,17 @@ OPTIONS:
   -i    Elasticsearch index directory (Required)
   -d    Date to retrieve (Required, format: YYYY.mm.dd)
   -t    Temporary directory for download and extract (default: /tmp)
-  -c    Command for s3cmd (default: s3cmd get)
+  -c    Command for BOTOCMD (default: BOTOCMD get)
   -e    Elasticsearch URL (default: http://localhost:9200)
   -n    How nice tar must be (default: 19)
 
 EXAMPLES:
 
-  ./elasticsearch-restore-index.sh -b "s3://someBucket" -i /mnt/es/data/nodes/0/indices \
-  -d "2013.05.01"
+  ./elasticsearch-restore-index.sh -b "s3://bucket" \
+  -i "/opt/logstash/server/data/elasticsearch/nodes/0/indices" \
+  -d "2013.07.01" 
 
-    Get the backup and restore script for the 2013.05.01 index from this s3
+    Get the backup and restore script for the 2013.07.01 index from this s3
     bucket and restore the index to the provided elasticsearch index directory.
 
 EOF
@@ -51,7 +52,7 @@ if [ "$USER" != 'root' ] && [ "$LOGNAME" != 'root' ]; then
 fi
 
 # Defaults
-S3CMD="s3cmd get"
+BOTOCMD="boto_rsync"
 ELASTICSEARCH="http://localhost:9200"
 NICE=19
 TMP_DIR="/tmp"
@@ -76,7 +77,7 @@ do
       DATE=$OPTARG
       ;;
     c)
-      S3CMD=$OPTARG
+      BOTOCMD=$OPTARG
       ;;
     e)
       ELASTICSEARCH=$OPTARG
@@ -123,8 +124,8 @@ YEARMONTH=${YEARMONTH:0:7}
 S3_TARGET="$S3_BASE/$YEARMONTH"
 
 # Get archive and execute the restore script. TODO check file existence first
-$S3CMD $S3_TARGET/$INDEX.tgz $TMP_DIR/$INDEX.tgz
-$S3CMD $S3_TARGET/$INDEX-restore.sh $TMP_DIR/$INDEX-restore.sh
+$BOTOCMD $S3_TARGET/$INDEX.tgz $TMP_DIR/$INDEX.tgz
+$BOTOCMD $S3_TARGET/$INDEX-restore.sh $TMP_DIR/$INDEX-restore.sh
 
 if [ -f $TMP_DIR/$INDEX-restore.sh ]; then
   chmod 750 $TMP_DIR/$INDEX-restore.sh

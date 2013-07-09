@@ -2,11 +2,7 @@
 
 This is a collection of bash scripts for managing [Elasticsearch](http://www.elasticsearch.org) indices. They are specifically designed around the daily index pattern used in [Logstash](http://logstash.net).
 
-Support is integrated for uploading backups to S3 using s3cmd.
-
-Each script has samples included, use '-h' or check the source.
-
-These are heavily inspired by [a previous collection of scripts](http://tech.superhappykittymeow.com/?p=296).
+Support is integrated for uploading and restoring index backups with [boto_rsync](https://github.com/seedifferently/boto_rsync).
 
 ### elasticsearch-remove-old-indices.sh
 
@@ -20,12 +16,11 @@ Backup handles making a backup and a restore script for a given index. The defau
 
 Restore handles retrieving a backup file and restore script (from S3), and then executing the restore script locally after download.
 
-
 ## Cron
 
 Something like this might be helpful, assuming you placed the scripts in the /opt/es/ directory (formatted for an /etc/cron.d/ file):
 
-    00 7 * * * root /bin/bash /opt/es/elasticsearch-backup-index.sh -b "s3://es-bucket" -i "/opt/elasticsearch/data/elasticsearch/nodes/0/indices" -c "s3cmd put -c /path/to/.s3cfg"
+    00 7 * * * root /bin/bash /opt/es/elasticsearch-backup-index.sh -b "s3://es-bucket" -i "/opt/logstash/server/data/elasticsearch/nodes/0/indices"
     00 9 * * * root /bin/bash /opt/es/elasticsearch-remove-old-indices.sh -i 21
 
 

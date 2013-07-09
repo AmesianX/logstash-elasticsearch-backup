@@ -5,7 +5,7 @@
 # Push logstash index from yesterday to s3 with an accompanying restore script.
 #   http://logstash.net
 #   http://www.elasticsearch.org
-#   https://github.com/s3tools/s3cmd | http://s3tools.org/s3cmd
+#   https://github.com/seedifferently/boto_rsync
 #
 #   Inspiration: 
 #     http://tech.superhappykittymeow.com/?p=296
@@ -31,7 +31,7 @@ OPTIONS:
   -b    S3 path for backups (Required)
   -i    Elasticsearch index directory (Required)
   -d    Backup a specific date (format: YYYY.mm.dd)
-  -c    Command for s3cmd (default: s3cmd put)
+  -c    Command for BOTOCMD (default: BOTOCMD put)
   -t    Temporary directory for archiving (default: /tmp)
   -p    Persist local backups, by default backups are not kept locally
   -s    Shards (default: 5)
@@ -42,19 +42,20 @@ OPTIONS:
 
 EXAMPLES:
 
-  ./elasticsearch-backup-index.sh -b "s3://someBucket" \
-  -i "/usr/local/elasticsearch/data/node/0/indices"
+  ./elasticsearch-backup-index.sh -b "s3://bucket" \
+  -i "/opt/logstash/server/data/elasticsearch/nodes/0/indices"
  
     This uses http://localhost:9200 to connect to elasticsearch and backs up
     the index from yesterday (based on system time, be careful with timezones)
 
-  ./elasticsearch-backup-index.sh -b "s3://bucket" -i "/mnt/es/data/node/0/indices" \
-  -d "2013.05.21" -c "/usr/local/bin/s3cmd put" -t "/mnt/es/backups" \
+  ./elasticsearch-backup-index.sh -b "s3://bucket" \
+  -i "/opt/logstash/server/data/elasticsearch/nodes/0/indices" \
+  -d "2013.07.01" -t "/mnt/es/backups" \
   -u "service es restart" -e "http://127.0.0.1:9200" -p
 
     Connect to elasticsearch using 127.0.0.1 instead of localhost, backup the
-    index from 2013.05.21 instead of yesterday, use the s3cmd in /usr/local/bin
-    explicitly, store the archive and restore script in /mnt/es/backups (and 
+    index from 2013.05.21 instead of yesterday, use boto_rsync, 
+    store the archive and restore script in /mnt/es/backups (and 
     persist them) and use 'service es restart' to restart elastic search.
 
 EOF
@@ -67,7 +68,7 @@ if [ "$USER" != 'root' ] && [ "$LOGNAME" != 'root' ]; then
 fi
 
 # Defaults
-S3CMD="s3cmd put"
+BOTOCMD="boto_rsync"
 TMP_DIR="/tmp"
 SHARDS=5
 REPLICAS=0
@@ -95,7 +96,7 @@ do
       DATE=$OPTARG
       ;;
     c)
-      S3CMD=$OPTARG
+      BOTOCMD=$OPTARG
       ;;
     t)
       TMP_DIR=$OPTARG
@@ -217,8 +218,8 @@ exit 0
 EOF
 
 # Put archive and restore script in s3.
-$S3CMD $TMP_DIR/$INDEX.tgz $S3_TARGET/$INDEX.tgz
-$S3CMD $TMP_DIR/$INDEX-restore.sh $S3_TARGET/$INDEX-restore.sh
+$BOTOCMD $TMP_DIR/$INDEX.tgz $S3_TARGET/$INDEX.tgz
+$BOTOCMD $TMP_DIR/$INDEX-restore.sh $S3_TARGET/$INDEX-restore.sh
 
 # cleanup tmp files
 if [ -z $PERSIST ]; then
