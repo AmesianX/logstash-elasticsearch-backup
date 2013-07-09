@@ -218,8 +218,9 @@ exit 0
 EOF
 
 # Put archive and restore script in s3.
-$BOTOCMD $TMP_DIR/$INDEX.tgz $S3_TARGET/$INDEX.tgz
-$BOTOCMD $TMP_DIR/$INDEX-restore.sh $S3_TARGET/$INDEX-restore.sh
+# Enable server-side encryption on files copied to S3 by default
+$BOTOCMD $TMP_DIR/$INDEX.tgz $S3_TARGET/$INDEX.tgz -e
+$BOTOCMD $TMP_DIR/$INDEX-restore.sh $S3_TARGET/$INDEX-restore.sh -e
 
 # cleanup tmp files
 if [ -z $PERSIST ]; then
